@@ -1,23 +1,28 @@
 import sfml as sf
 import math
 import time
+import random
 # create the main window
 window = sf.RenderWindow(sf.VideoMode(800, 600), "pySFML Window")
 
 class point:
-    def __init__(self, x, y, val, shape):
+    def __init__(self, x, y, val, shape, speed):
         self.x = x
         self.y = y
         self.val = val
         self.shape = shape
-
+        self.speed = speed
+        self.best_pos = (x, y)
 
 d = 50
 points = []
 target_x = 100
 target_y = 200
 step = 0.01
+best_pos = (0, 0)
 
+def get_dist(a, b):
+    return math.sqrt(math.pow(b[0] - a[0], 2) + math.pow(b[1] - a[1], 2))
 
 def c_circ(i, j):
     sol = sf.CircleShape()
@@ -29,22 +34,33 @@ def c_circ(i, j):
 
 for i in range(800 / d):
     for j in range(600 / d):
-        points.append(point(i*d, j*d, math.sqrt(math.pow(target_x - i*d, 2) +
-                                                  math.pow(target_y - j*d, 2)),
-                      c_circ(i*d, j*d)))
+        points.append(point(i*d, j*d, get_dist((i*d, j*d), (target_x, target_y)),
+                            c_circ(i*d, j*d), (0,0)))
+        if (points[-1].val < get_dist(best_pos, (target_x, target_y))):
+            best_pos = points[-1].best_pos
 
 
+print best_pos
 points = sorted(points, key=lambda point: point.val)
 
 def update(target_x, target_y):
+    global step
+    global best_pos
     global points
     closest = points[0]
     for p in points:
-        p.x -= (p.x - closest.x) * step
-        p.y -= (p.y - closest.y) * step
-        p.val = math.sqrt(math.pow(target_x - p.x, 2) + math.pow(target_y - p.y, 2))
+        a1 = random.random()
+        a2 = random.random()
+        p.speed = (p.speed[0]  +  0.0001 * (p.x - p.best_pos[0]) + 0.0001 * (p.x - best_pos[0]), p.speed[1]  +  0.0001 * (p.y - p.best_pos[1]) + 0.0001 * (p.y - best_pos[1]))
+        p.x -= p.speed[0]
+        p.y -= p.speed[1]
         p.shape.position = (p.x, p.y)
-
+        if (get_dist((p.x, p.y), (target_x, target_x)) < get_dist((p.x, p.y), p.best_pos)):
+            p.best_pos = (p.x, p.y)
+            if (get_dist(p.best_pos, (target_x, target_y))
+                < get_dist(best_pos, (target_x, target_y))):
+                best_pos = p.best_pos
+        
     points = sorted(points, key=lambda point: point.val)
 
 
